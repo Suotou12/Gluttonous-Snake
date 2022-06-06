@@ -1,12 +1,7 @@
 "use strict"
 //贪吃蛇
 class Game {
-    constructor(container, h, w) {
-        this.container = container
-        this.h = h
-        this.w = w
-        this.init()
-    }
+    
     init() {
         let table = document.createElement("table")
         table.style.borderCollapse = "collapse"
