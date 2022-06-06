@@ -25,11 +25,10 @@ function createConnection_() {
         host: '127.0.0.1',
         user: 'root',
         password: '',
-        database: 'xianYu'
+        database: 'test'
     });
     return sql_
 }
-//2022.6.7 2：55
 
 function sqlConnect() {
     sql = createConnection_()
@@ -58,7 +57,7 @@ server.on('request', (req, res) => {//监听请求主函数
     let query
     let url = new URL(req.url, `http://${req.headers.host}`)
     console.log("Received request:", url.pathname, url.searchParams.toString());
-    if (url.pathname.indexOf('/api/login') == 0) {
+    if (url.pathname.indexOf('/api/login') == 0) {     //登录
         req.on('data', (data) => {
             let dataStr = data.toString();
             let dataObj = JSON.parse(dataStr);
@@ -79,7 +78,7 @@ server.on('request', (req, res) => {//监听请求主函数
             )
         })
     }
-    else if (url.pathname.indexOf('/api/reg') == 0) {
+    else if (url.pathname.indexOf('/api/reg') == 0) {      //注册
         req.on('data', (data) => {
             let dataStr = data.toString();
             let dataObj = JSON.parse(dataStr);
@@ -102,7 +101,7 @@ server.on('request', (req, res) => {//监听请求主函数
             })
         })
     }
-    else if (url.pathname.indexOf('/api/uploadScore') == 0) {
+    else if (url.pathname.indexOf('/api/uploadScore') == 0) {     //上传记录
         req.on('data', (data) => {
             let dataStr = data.toString();
             let dataObj = JSON.parse(dataStr);
@@ -115,7 +114,7 @@ server.on('request', (req, res) => {//监听请求主函数
                     }));
                 } else {
                     if (dataObj.pass == result[0].password) {
-                        if (dataObj.score > result[0].highest) {
+                        if (dataObj.score > result[0].highest) {           //如果比原来记录高，则上传新纪录
                             sql.query(`UPDATE users SET highest=${dataObj.score} WHERE username='${dataObj.name}'`, (err, result) => {
                                 if (err) throw err;
                                 res.end(JSON.stringify({
@@ -124,7 +123,7 @@ server.on('request', (req, res) => {//监听请求主函数
                                     highest: dataObj.score
                                 }));
                             })
-                        } else {
+                        } else {                       //没有刷新记录则上传原来的记录
                             res.end(JSON.stringify({
                                 status: 'success',
                                 msg: '上传成功',
@@ -141,7 +140,7 @@ server.on('request', (req, res) => {//监听请求主函数
                 }
             })
         })
-    } else if (url.pathname.indexOf('/api/getRankList') == 0) {
+    } else if (url.pathname.indexOf('/api/getRankList') == 0) {  //获取排行榜信息
         sql.query(`SELECT * FROM users`, (err, result) => {
             if (err) throw err;
             let rank = []
@@ -157,9 +156,9 @@ server.on('request', (req, res) => {//监听请求主函数
                 msg: '获取成功',
                 data: rank
             }));
-        })//5:07
+        })
 
-    } else if (url.pathname.indexOf('/api/getProfile') == 0) {
+    } else if (url.pathname.indexOf('/api/getProfile') == 0) { //获取个人资料
         req.on('data', (data) => {
 
             let dataStr = data.toString();
@@ -185,7 +184,7 @@ server.on('request', (req, res) => {//监听请求主函数
                 }
             })
         })
-    } else if (url.pathname.indexOf('/api/admin/getUserInfo') == 0) {
+    } else if (url.pathname.indexOf('/api/admin/getUserInfo') == 0) {    //管理员查看用户信息
         req.on('data', (data) => {
 
             let dataStr = data.toString();
@@ -211,7 +210,7 @@ server.on('request', (req, res) => {//监听请求主函数
             }
             
         })
-    }else if (url.pathname.indexOf('/api/admin/edit') == 0) {
+    }else if (url.pathname.indexOf('/api/admin/edit') == 0) {           //管理员修改用户信息
         req.on('data', (data) => {
 
             let dataStr = data.toString();
@@ -233,7 +232,7 @@ server.on('request', (req, res) => {//监听请求主函数
             }
             
         })
-    }else if (url.pathname.indexOf('/api/admin/del') == 0) {
+    }else if (url.pathname.indexOf('/api/admin/del') == 0) {         //管理员删除用户信息
         req.on('data', (data) => {
 
             let dataStr = data.toString();
@@ -255,7 +254,7 @@ server.on('request', (req, res) => {//监听请求主函数
             }
             
         })
-    }else if (url.pathname.indexOf('/api/admin/add') == 0) {
+    }else if (url.pathname.indexOf('/api/admin/add') == 0) {         //管理员增加用户信息
         req.on('data', (data) => {
 
             let dataStr = data.toString();
@@ -277,7 +276,7 @@ server.on('request', (req, res) => {//监听请求主函数
             }
             
         })
-    } else if (url.pathname.indexOf('/api/uploadAvatar') == 0) {
+    } else if (url.pathname.indexOf('/api/uploadAvatar') == 0) {            //上传头像
         req.on('data', (data) => {
 
             let dataStr = data.toString();
