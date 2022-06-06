@@ -29,6 +29,7 @@ function createConnection_() {
     });
     return sql_
 }
+//2022.6.7 2：55
 
 function sqlConnect() {
     sql = createConnection_()
