@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇 后台用户管理系统</title>
+</head>
+<style>
+    .panel {
+        position: fixed;
+        width: 50vw;
+        left: 25vw;
+        height: 50vh;
+        top: 25vh;
+        background-color: rgba(224, 224, 224, 0.817);
+        border-radius: 10px;
+        line-height: 48px;
+        box-shadow: 0 0 10px #000;
+        padding: 16px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 50px;
+        padding-bottom: 40px;
+        border-bottom: 2px dashed #000;
+    }
+
+    button {
+        border: 1.5px solid #969696;
+        height: 30px;
+        width: 100px;
+        background-color: #313131;
+        color: whitesmoke;
+        box-shadow: 0px 4px 8px black;
+        transition: all 0.2s;
+    }
+
+    button:hover {
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div id="app ">
+        <h1>贪吃蛇 后台用户管理系统</h1>
+        <div id="actionBar" style="margin-left: 10vw">
+            <button onclick="add()">新增</button>
+        </div>
+        <table id="rankList">
+        </table>
+        <div id="editPanel" class="panel" style="opacity: 0;display: none;">
+            <h2>修改用户：<span id="edit-name"></span></h2><br>
+            头像：<input id="edit-avatar" type="file" onchange="needUploadAvatar=true"><br>
+            密码：<input id="edit-pass" type="text"><br>
+            最高分数：<input id="edit-highest" type="number"><br>
+            <button id="edit-submit">提交</button>
+
+        </div>
+        <div id="addPanel" class="panel" style="opacity: 0;display: none;">
+            <h2>新增用户</h2><br>
+            头像：<input id="add-avatar" type="file" onchange="needUploadAvatar=true"><br>
+            用户名：<input id="add-name" type="text"><br>
+            密码：<input id="add-pass" type="text"><br>
+            最高分数：<input id="add-highest" type="number"><br>
+            <button id="add-submit">提交</button>
+
+        </div>
+    </div>
+    <canvas id="canvas" width="64" height="64" style="display: none;"></canvas>
+</body>
+
+<style>
+    #rankList {
+        border-style: dashed;
+        border-width: 0px 0px 1px 0px;
+        width: 80vw;
+        text-align: center;
+        border-spacing: 0;
+        margin: 10%;
+        margin-top: 0;
+    }
+
+    #rankList td {
+        line-height: 35px;
+        height: 40px;
+        border-bottom: 2px solid rgb(41, 41, 41);
+        padding: 0;
+    }
+
+    .rankListLine img {
+        position: relative;
+        top: 5px;
+        height: 40px;
+        border-radius: 20px;
+    }
+
+    .even {
+        background-color: #dddddd;
+    }
+
+    #profile-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 32px;
+        margin-right: 10px;
+    }
+
+    #profile-avatar:hover {
+        cursor: pointer;
+        filter: brightness(0.8);
+    }
+
+    #gameoverNotify {
+        position: fixed;
+        width: 50vw;
+        height: 50vh;
+        top: 25vh;
+        background-color: rgba(224, 224, 224, 0.817);
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 0 10px #000;
+    }
+</style>
+<script src="../methods.js"></script>
+<script>
+    "use strict";
+    let needUploadAvatar = false;
+    let name_
+    let pass_
+    let formData
+    window.onload = () => {
+        name_ = "admin"
+        pass_ = "admin"
+        refresh()
+    }
+
+    function refresh() {
+        fetch("/api/admin/getUserInfo",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "name": name_,
+                    "pass": pass_
+                })
+            }
+        ).then(res => res.json()).then(data => {
+            if (data.status == "success") {
+                let rankList = data.data;
+                formData = data.data;
+                document.getElementById("rankList").innerHTML = "<tr><td>头像</td><td>用户名</td><td>密码</td><td>最高分数</td><td>修改</td><td>删除</td></tr>";
+                rankList.sort(function (a, b) {
+                    return b.highest - a.highest;
+                });
+                rankList.forEach((p, index) => {
+                    let line = document.createElement("tr");
+                    line.className = "rankListLine";
+                    if (p.avatar == "unset") {
+                        line.innerHTML = `<td><img src='https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'></td>`;
+
+                    } else {
+                        line.innerHTML = `<td><img src='${p.avatar}'></td>`;
+                    }
+
+                    line.innerHTML += `<td>${p.name}</td><td>${p.pass}</td><td>${p.highest}</td><td><a href='javascript:edit("${p.name}")'>=></a></td><td><a href='javascript:del("${p.name}")'>=></a></td>`;
+                    if (index % 2 == 0) {
+                        line.className += " even";
+                    } else {
+                        line.className += " odd";
+                    }
+
+                    document.getElementById("rankList").appendChild(line);
+                })
+
+            }
+        })
+
+    }
+
+    function edit(name) {
+        fadeOut(document.getElementById("addPanel"));
+        needUploadAvatar = false;
+        fadeIn(document.getElementById("editPanel"));
+        document.getElementById("edit-name").innerHTML = name;
+        formData.forEach(p => {
+            if (p.name == name) {
+                document.getElementById("edit-pass").value = p.pass;
+                document.getElementById("edit-highest").value = p.highest;
+                document.getElementById("edit-avatar").setAttribute("data-origin", p.avatar);
+            }
+        })
+        document.getElementById("edit-submit").onclick = () => {
+            let pass = document.getElementById("edit-pass").value;
+            let highest = document.getElementById("edit-highest").value;
+            if (needUploadAvatar) {
+                let file = document.getElementById("edit-avatar").files[0];
+                //base64
+                let canvas = document.getElementById("canvas")
+                let ctx = canvas.getContext("2d")
+                let inputImg = document.createElement("img");
+
+                inputImg.src = window.URL.createObjectURL(file);
+                inputImg.onerror = function () {
+                    alert("请选择正确的图片格式")
+                }
+                inputImg.onload = function () {
+                    ctx.drawImage(inputImg, 0, 0, canvas.width, canvas.height)
+                    let img = canvas.toDataURL("image/jpeg", 0.5);
+                    fetch("/api/admin/edit",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                "name": name_,
+                                "pass": pass_,
+                                "data": {
+                                    "name": name,
+                                    "pass": pass,
+                                    "highest": highest,
+                                    "avatar": img
+                                }
+                            })
+                        }
+                    ).then(res => res.json()).then(data => {
+                        if (data.status == "success") {
+
+                            fadeOut(document.getElementById("editPanel"));
+                            refresh();
+                            document.getElementById("edit-avatar").value = "";
+
+                        } else {
+                            alert("修改失败");
+                        }
+                    })
+
+                }
+            } else {
+                fetch("/api/admin/edit",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            "name": name_,
+                            "pass": pass_,
+                            "data": {
+                                "name": name,
+                                "pass": pass,
+                                "highest": highest,
+                                "avatar": document.getElementById("edit-avatar").getAttribute("data-origin")
+                            }
+                        })
+                    }
+                ).then(res => res.json()).then(data => {
+                    if (data.status == "success") {
+                        fadeOut(document.getElementById("editPanel"));
+                        refresh();
+                    } else {
+                        alert("修改失败");
+                    }
+                })
+            }
+        }
+    }
+    function del(name) {
+        if (confirm("确定删除" + name + "吗？")) {
+            fetch("/api/admin/del",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "name": name_,
+                        "pass": pass_,
+                        "data": {
+                            "name": name
+                        }
+                    })
+                }
+            ).then(res => res.json()).then(data => {
+                if (data.status == "success") {
+                    refresh();
+                } else {
+                    alert("删除失败");
+                }
+            })
+        }
+
+    }
+
+    function add() {
+        fadeOut(document.getElementById("editPanel"));
+        document.getElementById("add-name").value = "";
+        document.getElementById("add-pass").value = "";
+        document.getElementById("add-highest").value = "";
+        document.getElementById("add-avatar").value = "";
+        fadeIn(document.getElementById("addPanel"));
+        document.getElementById("add-submit").onclick = () => {
+
+            let name = document.getElementById("add-name").value;
+            let pass = document.getElementById("add-pass").value;
+            let highest = document.getElementById("add-highest").value;
+            let file = document.getElementById("add-avatar").files[0];
+            if (name == "" || pass == "" || highest == "") {
+                alert("请填写完整信息");
+                return;
+            }
+            if (file == undefined) {
+                let img = "unset";
+                fetch("/api/admin/add",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            "name": name_,
+                            "pass": pass_,
+                            "data": {
+                                "name": name,
+                                "pass": pass,
+                                "highest": highest,
+                                "avatar": img
+                            }
+                        })
+                    }
+                ).then(res => res.json()).then(data => {
+                    if (data.status == "success") {
+                        fadeOut(document.getElementById("addPanel"));
+                        refresh();
+                        document.getElementById("add-avatar").value = "";
+                        document.getElementById("add-name").value = "";
+                        document.getElementById("add-pass").value = "";
+                        document.getElementById("add-highest").value = "";
+
+                    } else {
+                        alert("添加失败");
+                    }
+                })
+
+            } else {
+                let canvas = document.getElementById("canvas")
+                let ctx = canvas.getContext("2d")
+                let inputImg = document.createElement("img");
+
+                inputImg.src = window.URL.createObjectURL(file);
+                inputImg.onerror = function () {
+                    alert("请选择正确的图片格式")
+                }
+                inputImg.onload = function () {
+                    ctx.drawImage(inputImg, 0, 0, canvas.width, canvas.height)
+                    let img = canvas.toDataURL("image/jpeg", 0.5);
+                    fetch("/api/admin/add",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                "name": name_,
+                                "pass": pass_,
+                                "data": {
+                                    "name": name,
+                                    "pass": pass,
+                                    "highest": highest,
+                                    "avatar": img
+                                }
+                            })
+                        }
+                    ).then(res => res.json()).then(data => {
+                        if (data.status == "success") {
+                            fadeOut(document.getElementById("addPanel"));
+                            refresh();
+                            document.getElementById("add-avatar").value = "";
+                            document.getElementById("add-name").value = "";
+                            document.getElementById("add-pass").value = "";
+                            document.getElementById("add-highest").value = "";
+
+                        } else {
+                            alert("添加失败");
+                        }
+                    })
+
+                }
+
+            }
+            //base64
+        }
+
+    }
+
+</script>
+
+</html>
