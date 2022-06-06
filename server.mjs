@@ -157,7 +157,7 @@ server.on('request', (req, res) => {//监听请求主函数
                 msg: '获取成功',
                 data: rank
             }));
-        })
+        })//5:07
 
     } else if (url.pathname.indexOf('/api/getProfile') == 0) {
         req.on('data', (data) => {
