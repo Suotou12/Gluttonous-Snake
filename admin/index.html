@@ -182,35 +182,35 @@
 
     }
 
-    function edit(name) {
+     function edit(name) {                      //修改用户信息
         fadeOut(document.getElementById("addPanel"));
         needUploadAvatar = false;
         fadeIn(document.getElementById("editPanel"));
         document.getElementById("edit-name").innerHTML = name;
-        formData.forEach(p => {
-            if (p.name == name) {
-                document.getElementById("edit-pass").value = p.pass;
+        formData.forEach(p => {           //找到在本地数据库中对应的用户
+            if (p.name == name) {         //找到后获取他的信息
+                document.getElementById("edit-pass").value = p.pass;    
                 document.getElementById("edit-highest").value = p.highest;
                 document.getElementById("edit-avatar").setAttribute("data-origin", p.avatar);
             }
         })
-        document.getElementById("edit-submit").onclick = () => {
-            let pass = document.getElementById("edit-pass").value;
-            let highest = document.getElementById("edit-highest").value;
-            if (needUploadAvatar) {
-                let file = document.getElementById("edit-avatar").files[0];
+        document.getElementById("edit-submit").onclick = () => {       //进入编辑事件
+            let pass = document.getElementById("edit-pass").value;     //编辑密码
+            let highest = document.getElementById("edit-highest").value;    //编辑最高分数
+            if (needUploadAvatar) {     //如果上传头像
+                let file = document.getElementById("edit-avatar").files[0];   //拿到地址
                 //base64
-                let canvas = document.getElementById("canvas")
+                let canvas = document.getElementById("canvas")     //绘图
                 let ctx = canvas.getContext("2d")
                 let inputImg = document.createElement("img");
 
-                inputImg.src = window.URL.createObjectURL(file);
-                inputImg.onerror = function () {
+                inputImg.src = window.URL.createObjectURL(file);   //创建一个新的URL
+                inputImg.onerror = function () {                   //创建一个img对象
                     alert("请选择正确的图片格式")
                 }
-                inputImg.onload = function () {
+                inputImg.onload = function () {       //加载数据
                     ctx.drawImage(inputImg, 0, 0, canvas.width, canvas.height)
-                    let img = canvas.toDataURL("image/jpeg", 0.5);
+                    let img = canvas.toDataURL("image/jpeg", 0.5);    //返回一个包含图片展示的数据URL
                     fetch("/api/admin/edit",
                         {
                             method: "POST",
